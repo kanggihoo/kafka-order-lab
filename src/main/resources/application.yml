@@ -11,6 +11,11 @@ spring:
       # Consumer Group에 저장된 offset이 없을 때 가장 오래된 record부터 읽는다.
       # 이미 저장된 offset이 있으면 그 offset부터 이어서 읽는다.
       auto-offset-reset: earliest
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+  jackson:
+    default-property-inclusion: non_null
 
 # 애플리케이션에서 사용하는 Kafka 이름 설정
 app:

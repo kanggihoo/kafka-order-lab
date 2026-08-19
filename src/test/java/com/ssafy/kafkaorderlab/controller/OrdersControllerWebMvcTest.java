@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.ssafy.kafkaorderlab.dto.CreateOrderRequest;
@@ -33,7 +34,10 @@ class OrdersControllerWebMvcTest {
 					.content("""
 						{"orderId":"1001","amount":15000}
 						"""))
-			.andExpect(status().isAccepted());
+			.andExpect(status().isAccepted())
+			.andExpect(jsonPath("$.success").value(true))
+			.andExpect(jsonPath("$.status").value(202))
+			.andExpect(jsonPath("$.data").doesNotExist());
 
 		verify(orderEventService).publishOrderCreated(any(CreateOrderRequest.class));
 	}
@@ -46,7 +50,12 @@ class OrdersControllerWebMvcTest {
 					.content("""
 						{"orderId":"","amount":0}
 						"""))
-			.andExpect(status().isBadRequest());
+			.andExpect(status().isBadRequest())
+			.andExpect(jsonPath("$.success").value(false))
+			.andExpect(jsonPath("$.status").value(400))
+			.andExpect(jsonPath("$.errorCode").value("VALIDATION_ERROR"))
+			.andExpect(jsonPath("$.errors.orderId").exists())
+			.andExpect(jsonPath("$.path").value("/orders"));
 
 		verifyNoInteractions(orderEventService);
 	}

@@ -140,6 +140,7 @@ docker compose exec kafka /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-se
 ## 📚 상세 문서
 
 - 📋 [Kafka 주문 처리 학습 로드맵](docs/Kafka%20주문%20처리%20학습%20로드맵.md)
+- 📏 [Java 구현 최소 지침서](docs/Java%20구현%20최소%20지침서.md)
 - 📖 [Kafka 주문 처리 학습 상세 가이드](docs/Kafka%20주문%20처리%20학습%20상세%20가이드.md)
 - 📝 [단계별 실습 가이드 (Step 00 ~ 12)](docs/steps/)
 - 🔬 [장애 실험 기록 (Experiments)](docs/experiments/)

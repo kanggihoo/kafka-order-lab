@@ -1,5 +1,7 @@
 package com.ssafy.kafkaorderlab.consumer;
 
+import com.ssafy.kafkaorderlab.event.EventEnvelope;
+import com.ssafy.kafkaorderlab.event.OrderCreatedPayload;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -12,12 +14,20 @@ import org.springframework.stereotype.Component;
 @Slf4j
 class OrderEventObserver {
 
+	private final OrderCreatedEventValidator validator;
+
+	OrderEventObserver(OrderCreatedEventValidator validator) {
+		this.validator = validator;
+	}
+
 	@KafkaListener(
 		topics = "${app.kafka.topics.order-events}",
 		groupId = "${app.kafka.consumer.group-id}"
 	)
-	void observe(ConsumerRecord<String, String> record) {
-		log.info("order event observed: key={}, partition={}, offset={}, value={}",
-			record.key(), record.partition(), record.offset(), record.value());
+	void observe(ConsumerRecord<String, EventEnvelope<OrderCreatedPayload>> record) {
+		validator.validate(record.value());
+		EventEnvelope<OrderCreatedPayload> event = record.value();
+		log.info("order event observed: eventId={}, eventType={}, eventVersion={}, key={}, topic={}, partition={}, offset={}",
+			event.eventId(), event.eventType(), event.eventVersion(), record.key(), record.topic(), record.partition(), record.offset());
 	}
 }
