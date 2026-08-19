@@ -1,23 +1,35 @@
+# Kafka broker와 controller를 한 컨테이너에서 실행하는 단일 노드 구성
 services:
   kafka:
     image: apache/kafka:4.1.2
+    # 호스트의 Spring Boot 앱이 Kafka에 접속할 수 있도록 외부 포트를 연다.
     ports:
       - "29092:29092"
     environment:
+      # KRaft 클러스터에서 사용할 노드 ID
       KAFKA_NODE_ID: 1
+      # ZooKeeper 없이 broker와 controller 역할을 함께 수행한다.
       KAFKA_PROCESS_ROLES: broker,controller
+      # 단일 노드 controller quorum 설정
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # 컨테이너 내부 통신용 broker listener, controller listener, 호스트 접속용 listener
       KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,PLAINTEXT_HOST://:29092
+      # Kafka가 클라이언트에게 알려주는 접속 주소
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      # 각 listener 이름에 사용할 보안 프로토콜 매핑
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      # broker 간 통신에 사용할 listener
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # controller 통신에 사용할 listener
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
     healthcheck:
+      # Kafka CLI로 broker가 topic 명령을 받을 수 있는지 확인한다.
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list"]
       interval: 5s
       timeout: 5s
       retries: 12
 
+  # Kafka가 healthy 상태가 된 뒤 order-events topic을 생성한다.
   kafka-init:
     image: apache/kafka:4.1.2
     depends_on:

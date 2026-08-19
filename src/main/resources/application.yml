@@ -1,0 +1,23 @@
+# Spring Boot 애플리케이션의 기본 설정
+spring:
+  application:
+    # 애플리케이션 이름이다. Actuator와 로그 등에서 식별자로 사용된다.
+    name: kafka-order-lab
+  kafka:
+    # Spring Boot가 Kafka에 접속할 시작 주소다.
+    # 환경변수가 없으면 호스트에서 실행하는 앱 기준 localhost:29092를 사용한다.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    consumer:
+      # Consumer Group에 저장된 offset이 없을 때 가장 오래된 record부터 읽는다.
+      # 이미 저장된 offset이 있으면 그 offset부터 이어서 읽는다.
+      auto-offset-reset: earliest
+
+# 애플리케이션에서 사용하는 Kafka 이름 설정
+app:
+  kafka:
+    topics:
+      # 주문 생성 이벤트를 발행하고 소비할 topic이다.
+      order-events: order-events
+    consumer:
+      # 주문 이벤트를 관찰하는 Consumer Group 이름이다.
+      group-id: order-observer
