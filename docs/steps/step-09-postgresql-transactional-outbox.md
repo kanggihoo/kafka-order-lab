@@ -69,3 +69,10 @@ select event_id, aggregate_id, event_type, status, sent_at from outbox_event ord
 ## 다음 단계로 넘기는 상태
 
 이제 producer 쪽 중복 발행은 의도적으로 허용된다. step-10에서 consumer가 `eventId`를 DB unique constraint로 한 번만 업무 처리하게 만든다.
+
+
+## 코드 작성 규칙
+
+- Java 클래스, record, public/protected 메서드에는 한글 Javadoc을 작성한다.
+- Javadoc에는 코드의 의도와 필요한 경우 입력값, 반환값, 예외, Kafka 발행/소비 부작용을 기록한다.
+- 구현이 자명한 private 코드에는 불필요한 Javadoc을 추가하지 않는다.

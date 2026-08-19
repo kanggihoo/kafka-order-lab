@@ -46,3 +46,10 @@ docker compose exec kafka kafka-consumer-groups.sh --bootstrap-server kafka:9092
 ## 다음 단계로 넘기는 상태
 
 중복은 정상적으로 발생할 수 있다는 전제가 생겼다. step-04에서는 이력 log와 최신 상태 조회용 log를 구분하고, step-10에서 업무 중복 제거를 구현한다.
+
+
+## 코드 작성 규칙
+
+- Java 클래스, record, public/protected 메서드에는 한글 Javadoc을 작성한다.
+- Javadoc에는 코드의 의도와 필요한 경우 입력값, 반환값, 예외, Kafka 발행/소비 부작용을 기록한다.
+- 구현이 자명한 private 코드에는 불필요한 Javadoc을 추가하지 않는다.

@@ -46,3 +46,10 @@ docker compose exec kafka kafka-console-consumer.sh --bootstrap-server kafka:909
 ## 다음 단계로 넘기는 상태
 
 토픽과 consumer 동작을 눈으로 확인할 필요가 커졌다. step-05에서 CLI, Actuator, 로그, Testcontainers로 지금까지의 검증을 반복 가능하게 만든다.
+
+
+## 코드 작성 규칙
+
+- Java 클래스, record, public/protected 메서드에는 한글 Javadoc을 작성한다.
+- Javadoc에는 코드의 의도와 필요한 경우 입력값, 반환값, 예외, Kafka 발행/소비 부작용을 기록한다.
+- 구현이 자명한 private 코드에는 불필요한 Javadoc을 추가하지 않는다.

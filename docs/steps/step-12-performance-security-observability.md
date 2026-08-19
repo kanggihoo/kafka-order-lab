@@ -50,3 +50,10 @@ broker/controller 상태, partition leader/ISR, consumer lag, Outbox NEW/SENT �
 - ISR가 줄어든 환경에서 `acks=all`과 `min.insync.replicas`는 어떤 전송을 실패시키는가?
 - Outbox relay가 send 성공 후 중단되면 왜 중복 발행될 수 있고, Inbox는 무엇을 막는가?
 - consumer가 DB 처리 뒤 offset commit 전에 종료되면 왜 같은 event가 재전달되며, 업무 효과를 한 번으로 제한하려면 무엇이 필요한가?
+
+
+## 코드 작성 규칙
+
+- Java 클래스, record, public/protected 메서드에는 한글 Javadoc을 작성한다.
+- Javadoc에는 코드의 의도와 필요한 경우 입력값, 반환값, 예외, Kafka 발행/소비 부작용을 기록한다.
+- 구현이 자명한 private 코드에는 불필요한 Javadoc을 추가하지 않는다.

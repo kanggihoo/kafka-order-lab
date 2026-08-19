@@ -47,3 +47,10 @@ docker compose exec kafka-1 kafka-topics.sh --bootstrap-server kafka-1:9092 --de
 ## 다음 단계로 넘기는 상태
 
 복제 상태를 볼 수 있게 됐다. step-07에서 `acks=all`과 `min.insync.replicas`로 ISR 감소 시 producer가 어떤 결과를 내야 하는지 설정한다.
+
+
+## 코드 작성 규칙
+
+- Java 클래스, record, public/protected 메서드에는 한글 Javadoc을 작성한다.
+- Javadoc에는 코드의 의도와 필요한 경우 입력값, 반환값, 예외, Kafka 발행/소비 부작용을 기록한다.
+- 구현이 자명한 private 코드에는 불필요한 Javadoc을 추가하지 않는다.
