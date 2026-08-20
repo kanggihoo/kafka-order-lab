@@ -8,9 +8,9 @@
 
 | 항목 | 내용 |
 |---|---|
-| 실행 일시 | 2026-08-20 |
-| 실행 환경 | OpenJDK 21.0.11, Spring Boot 4.1.0, Apache Kafka 4.1.2, Docker Compose v5.2.0 |
-| broker 상태 | `step2-kafka-1` healthy (단일 KRaft 노드) |
+| 실행 일시 | 2026-08-20 (초회), 2026-08-20 재검증 |
+| 실행 환경 | Gradle toolchain Java 21, 실행 JDK OpenJDK 25.0.1, Spring Boot 4.1.0, Apache Kafka 4.1.2, Docker Compose v5.1.2 |
+| broker 상태 | `kafka-order-lab-kafka-1` healthy (단일 KRaft 노드) |
 | topic 상태 | `order-events` PartitionCount 3, `payment-events` PartitionCount 3, ReplicationFactor 1 |
 | consumer group | `order-observer`, `payment-service`, `payment-observer` |
 | 실행 방식 | `java -jar build/libs/kafka-order-lab-0.0.1-SNAPSHOT.jar`, `SERVER_PORT`로 인스턴스 분리 |
@@ -108,17 +108,19 @@ order created consumed by payment-service: key=1001, topic=order-events, partiti
 행동: 애플리케이션 producer는 항상 `orderId`를 key로 쓰므로, `kafka-console-producer.sh`로 key 없이 같은 주문(`payload.orderId=1001`) 이벤트 9건을 발행했다. 6건은 한 번의 producer 실행으로, 3건은 producer를 3번 따로 실행해 보냈다.
 
 - 예상: key가 없으면 partition이 고정되지 않아 같은 주문의 이벤트가 여러 partition으로 흩어지고, 서로 다른 consumer가 동시에 처리해 주문 단위 순서가 깨진다.
-- 실제: 한 번에 보낸 6건은 sticky partitioner 때문에 모두 `order-events-2`로 갔고, producer를 따로 실행한 3건 중 2건은 `order-events-0`으로 갔다. 결과적으로 같은 `1001` 주문의 이벤트가 P2와 P0으로 쪼개져 8081 인스턴스와 8083 인스턴스에서 **동시에** 처리됐다.
+- 실제: 한 번에 보낸 6건은 sticky partitioner 때문에 모두 `order-events-2`로 갔고, producer를 따로 실행한 3건 중 1건도 P2, 2건은 `order-events-1`로 갔다. 결과적으로 같은 `1001` 주문의 이벤트가 P2 7건과 P1 2건으로 쪼개져 8080 인스턴스와 8082 인스턴스에서 **동시에** 처리됐다.
 
 ```text
-# 8081 인스턴스
+# 8080 인스턴스 (P2 소유)
 order created consumed by payment-service: key=null, topic=order-events, partition=2, offset=2..8
-# 8083 인스턴스
-order created consumed by payment-service: key=null, topic=order-events, partition=0, offset=9
-order created consumed by payment-service: key=null, topic=order-events, partition=0, offset=10
+# 8082 인스턴스 (P1 소유)
+order created consumed by payment-service: key=null, topic=order-events, partition=1, offset=4
+order created consumed by payment-service: key=null, topic=order-events, partition=1, offset=5
 ```
 
-후속 `PaymentRequested`는 payload의 `orderId`로 key를 복원했기 때문에 모두 `payment-events-0`에 들어갔지만, 두 인스턴스가 각자 발행했기 때문에 P0 안의 offset 순서가 원본 발생 순서와 일치하지 않았다(예: offset 6~8과 9~14가 서로 다른 인스턴스에서 섞여 기록됨).
+후속 `PaymentRequested`는 payload의 `orderId`로 key를 복원했기 때문에 모두 `payment-events-0`에 들어갔지만, 두 인스턴스가 각자 발행했기 때문에 P0 안의 offset 순서가 원본 발생 순서와 일치하지 않았다. 8080이 offset 9~14와 17을, 8082가 offset 15~16을 기록해 서로 끼어들었다.
+
+> 재검증 시 partition 번호는 producer 실행 시점의 sticky batch 경계에 따라 달라진다. 핵심은 "같은 주문이 둘 이상의 partition으로 쪼개져 여러 consumer가 동시에 처리한다"는 사실이고, 이는 두 번의 실행에서 모두 재현됐다.
 
 - 결론: 순서 보장은 key가 있어야 성립한다. key가 없으면 partitioner가 batch 단위로 partition을 고르기 때문에 "우연히 같은 partition"이 되기도 하고, producer 실행이 바뀌면 흩어진다. 상류에서 한 번 순서가 깨지면 하류에서 key를 복원해도 순서는 복원되지 않는다.
 
@@ -138,7 +140,7 @@ Assigned partitions: group=payment-service, partitions=[order-events-2]
 Assigned partitions: group=payment-service, partitions=[order-events-1]
 ```
 
-`--describe --members`에서도 4 member 중 하나가 `#PARTITIONS 0`이었다. 주문 9건은 key 해시 결과 2개 partition에만 들어가 container thread 2개(`ntainer#2-0-C-1` 6건, `ntainer#2-2-C-1` 3건)가 처리했고, 나머지 2개 thread는 아무 record도 처리하지 않았다.
+`--describe --members`에서도 4 member 중 하나가 `#PARTITIONS 0`이었다. 주문 9건은 key 해시 결과 P0 6건과 P2 3건에만 들어가 container thread 2개(`ntainer#2-0-C-1` 6건, `ntainer#2-2-C-1` 3건)가 처리했고, 나머지 2개 thread는 아무 record도 처리하지 않았다.
 
 - 결론: concurrency는 인스턴스 안의 consumer 수일 뿐이므로 partition 수를 넘으면 idle consumer가 된다. 게다가 partition이 남아 있어도 key 분포가 치우치면 실제 처리 thread 수는 partition 수보다 더 적어진다. 처리량 목표는 partition 수, key 분포, record당 처리 시간을 함께 봐야 한다.
 
@@ -147,10 +149,10 @@ Assigned partitions: group=payment-service, partitions=[order-events-1]
 | 확인 항목 | 확인 방법 | 실제 결과 |
 |---|---|---|
 | topic partition 수 | `kafka-topics.sh --describe` | 두 topic 모두 3 |
-| 같은 key의 partition 고정 | 애플리케이션 로그 | `1001` 6건 전부 P0 |
+| 같은 key의 partition 고정 | 애플리케이션 로그 | `1001` 6건(초기 3건 + 추가 3건) 전부 P0 |
 | topic 간 partition 일치 | 애플리케이션 로그 | 12건 모두 order/payment partition 번호 동일 |
 | 1·2·3·4 인스턴스 할당 | `kafka-consumer-groups.sh --describe`, `--members` | 3:0:0 → 2:1 → 1:1:1 → 1:1:1:0 |
-| key=null 분산 | console-producer + 로그 | 같은 주문이 P2와 P0으로 분리, 두 인스턴스가 동시 처리 |
+| key=null 분산 | console-producer + 로그 | 같은 주문이 P2 7건 / P1 2건으로 분리, 두 인스턴스가 동시 처리 |
 | concurrency 4 | `Assigned partitions` 로그 | 한 thread의 할당이 빈 목록 |
 
 자동화 검증은 `PartitionRoutingIntegrationTest`(embedded Kafka, 3 partition)로 같은 key의 partition 고정과 topic 간 partition 일치를 확인한다.
