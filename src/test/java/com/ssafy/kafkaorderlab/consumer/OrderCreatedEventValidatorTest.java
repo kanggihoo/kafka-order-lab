@@ -26,7 +26,7 @@ class OrderCreatedEventValidatorTest {
 	@DisplayName("orderId가 없으면 계약 위반으로 처리한다")
 	void rejectsMissingOrderId() {
 		assertThatThrownBy(() -> validator.validate(event(1, null, 15000L, null)))
-			.isInstanceOf(InvalidOrderCreatedEventException.class)
+			.isInstanceOf(InvalidEventException.class)
 			.hasMessageContaining("orderId");
 	}
 
@@ -34,7 +34,7 @@ class OrderCreatedEventValidatorTest {
 	@DisplayName("지원하지 않는 버전은 계약 위반으로 처리한다")
 	void rejectsUnsupportedVersion() {
 		assertThatThrownBy(() -> validator.validate(event(3, "1001", 15000L, null)))
-			.isInstanceOf(InvalidOrderCreatedEventException.class)
+			.isInstanceOf(InvalidEventException.class)
 			.hasMessageContaining("eventVersion");
 	}
 
@@ -43,11 +43,11 @@ class OrderCreatedEventValidatorTest {
 	void rejectsMissingEnvelopeFields() {
 		assertThatThrownBy(() -> validator.validate(new EventEnvelope<>(null, "OrderCreated", 1,
 			Instant.parse("2026-08-20T00:00:00Z"), new OrderCreatedPayload("1001", 15000L, null))))
-			.isInstanceOf(InvalidOrderCreatedEventException.class)
+			.isInstanceOf(InvalidEventException.class)
 			.hasMessageContaining("eventId");
 		assertThatThrownBy(() -> validator.validate(new EventEnvelope<>(UUID.randomUUID(), "OrderCreated", 1,
 			null, new OrderCreatedPayload("1001", 15000L, null))))
-			.isInstanceOf(InvalidOrderCreatedEventException.class)
+			.isInstanceOf(InvalidEventException.class)
 			.hasMessageContaining("occurredAt");
 	}
 

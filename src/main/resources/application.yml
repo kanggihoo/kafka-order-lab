@@ -17,12 +17,29 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
-# 애플리케이션에서 사용하는 Kafka 이름 설정
+# 여러 인스턴스를 동시에 실행할 때 포트 충돌을 피하기 위해 환경변수로 덮어쓴다.
+server:
+  port: ${SERVER_PORT:8080}
+
+# 애플리케이션에서 사용하는 Kafka 이름과 병렬성 설정
 app:
   kafka:
     topics:
-      # 주문 생성 이벤트를 발행하고 소비할 topic이다.
+      # 주문 생명주기 이벤트를 발행하고 소비할 topic이다. partition 3개로 운영한다.
       order-events: order-events
+      # 결제 요청 이벤트를 발행하고 소비할 topic이다. partition 3개로 운영한다.
+      payment-events: payment-events
     consumer:
-      # 주문 이벤트를 관찰하는 Consumer Group 이름이다.
-      group-id: order-observer
+      # 주문 이벤트를 관찰하는 Consumer Group이다.
+      order-observer:
+        group-id: order-observer
+        concurrency: ${ORDER_OBSERVER_CONCURRENCY:1}
+      # 주문 생성 이벤트를 받아 결제 요청 이벤트를 발행하는 Consumer Group이다.
+      # concurrency는 인스턴스 안의 consumer 수이므로 partition 수를 넘으면 idle consumer가 생긴다.
+      payment-service:
+        group-id: payment-service
+        concurrency: ${PAYMENT_SERVICE_CONCURRENCY:1}
+      # 결제 요청 이벤트의 metadata를 기록하는 가짜 결제 observer Consumer Group이다.
+      payment-observer:
+        group-id: payment-observer
+        concurrency: ${PAYMENT_OBSERVER_CONCURRENCY:1}

@@ -2,6 +2,8 @@
 services:
   kafka:
     image: apache/kafka:4.1.2
+    # broker가 자기 host 이름을 해석할 수 있도록 고정한다.
+    hostname: kafka
     # 호스트의 Spring Boot 앱이 Kafka에 접속할 수 있도록 외부 포트를 연다.
     ports:
       - "29092:29092"
@@ -31,12 +33,16 @@ services:
       timeout: 5s
       retries: 12
 
-  # Kafka가 healthy 상태가 된 뒤 order-events topic을 생성한다.
+  # Kafka가 healthy 상태가 된 뒤 실습에 사용할 topic을 3 partition으로 생성한다.
+  # partition 수는 consumer group의 병렬성 상한이므로 step-02에서 3으로 맞춘다.
   kafka-init:
     image: apache/kafka:4.1.2
     depends_on:
       kafka:
         condition: service_healthy
     command: >-
+      sh -c "
       /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists
-      --topic order-events --partitions 1 --replication-factor 1
+      --topic order-events --partitions 3 --replication-factor 1 &&
+      /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 --create --if-not-exists
+      --topic payment-events --partitions 3 --replication-factor 1"

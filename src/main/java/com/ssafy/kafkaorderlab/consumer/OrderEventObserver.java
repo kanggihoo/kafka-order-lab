@@ -22,7 +22,9 @@ class OrderEventObserver {
 
 	@KafkaListener(
 		topics = "${app.kafka.topics.order-events}",
-		groupId = "${app.kafka.consumer.group-id}"
+		groupId = "${app.kafka.consumer.order-observer.group-id}",
+		concurrency = "${app.kafka.consumer.order-observer.concurrency}",
+		containerFactory = "orderCreatedListenerContainerFactory"
 	)
 	void observe(ConsumerRecord<String, EventEnvelope<OrderCreatedPayload>> record) {
 		validator.validate(record.value());

@@ -1,16 +1,14 @@
 package com.ssafy.kafkaorderlab.service;
 
-import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.EVENT_TYPE_HEADER;
-import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.EVENT_VERSION_HEADER;
 import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.TYPE;
 import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_1;
 import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_2;
 
 import com.ssafy.kafkaorderlab.dto.CreateOrderRequest;
 import com.ssafy.kafkaorderlab.event.EventEnvelope;
+import com.ssafy.kafkaorderlab.event.EventHeaders;
 import com.ssafy.kafkaorderlab.event.OrderCreatedPayload;
 import java.time.Instant;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -41,6 +39,7 @@ public class OrderEventService {
 
 	/**
 	 * 주문 생성 요청을 계약형 Kafka 이벤트로 발행한다.
+	 * record key로 {@code orderId}를 사용하므로 같은 주문의 이벤트는 항상 같은 partition으로 간다.
 	 *
 	 * @param request 검증을 통과한 주문 요청
 	 * @throws IllegalStateException Kafka 이벤트 발행 준비에 실패한 경우
@@ -49,17 +48,16 @@ public class OrderEventService {
 		EventEnvelope<OrderCreatedPayload> event = createEvent(request);
 		ProducerRecord<String, EventEnvelope<OrderCreatedPayload>> record = new ProducerRecord<>(
 			orderEventsTopic, request.orderId(), event);
-		record.headers().add(EVENT_TYPE_HEADER, event.eventType().getBytes(StandardCharsets.UTF_8));
-		record.headers().add(EVENT_VERSION_HEADER, String.valueOf(event.eventVersion()).getBytes(StandardCharsets.UTF_8));
+		EventHeaders.addContractHeaders(record.headers(), event.eventType(), event.eventVersion());
 		CompletableFuture<SendResult<String, EventEnvelope<OrderCreatedPayload>>> future = kafkaTemplate.send(record);
 		future.whenComplete((result, error) -> {
 			if (error != null) {
-				log.error("order event publish failed: key={}", request.orderId(), error);
+				log.error("order event publish failed: topic={}, key={}", orderEventsTopic, request.orderId(), error);
 				return;
 			}
 			RecordMetadata metadata = result.getRecordMetadata();
-			log.info("order event published: eventId={}, key={}, partition={}, offset={}", event.eventId(), request.orderId(),
-				metadata.partition(), metadata.offset());
+			log.info("order event published: eventId={}, key={}, topic={}, partition={}, offset={}", event.eventId(),
+				request.orderId(), metadata.topic(), metadata.partition(), metadata.offset());
 		});
 	}
 
