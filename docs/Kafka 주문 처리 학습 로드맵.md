@@ -69,7 +69,7 @@ Kafka key = orderId
 - Kafka UI는 초기에 만들지 않는다. CLI, 로그, Actuator로 먼저 관찰한 뒤 마지막에 캡스톤으로 만든다.
 - 각 장애 실험은 설정, 행동, 예상, 실제 결과, 결론을 Markdown으로 기록한다.
 - DB, Debezium, Schema Registry 같은 구성 요소는 해당 단계 전에는 추가하지 않는다.
-- 코드 구현은 [[Java 구현 최소 지침서]]를 공통 기준으로 삼는다.
+- 코드 구현은 [[code-convention]]을 공통 기준으로 삼는다.
 
 ## 상세 가이드
 

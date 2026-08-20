@@ -22,6 +22,8 @@ services:
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       # controller 통신에 사용할 listener
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # 단일 broker에서도 consumer group offset 내부 topic을 생성할 수 있게 한다.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     healthcheck:
       # Kafka CLI로 broker가 topic 명령을 받을 수 있는지 확인한다.
       test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list"]

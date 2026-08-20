@@ -1,5 +1,9 @@
 package com.ssafy.kafkaorderlab.consumer;
 
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.TYPE;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_1;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_2;
+
 import com.ssafy.kafkaorderlab.event.EventEnvelope;
 import com.ssafy.kafkaorderlab.event.OrderCreatedPayload;
 import org.springframework.stereotype.Component;
@@ -9,8 +13,6 @@ import org.springframework.stereotype.Component;
  */
 @Component
 class OrderCreatedEventValidator {
-
-	private static final String ORDER_CREATED = "OrderCreated";
 
 	/**
 	 * 이벤트 종류, 버전, 필수 payload를 검증한다.
@@ -25,10 +27,10 @@ class OrderCreatedEventValidator {
 		if (event.occurredAt() == null) {
 			throw new InvalidOrderCreatedEventException("occurredAt is required");
 		}
-		if (!ORDER_CREATED.equals(event.eventType())) {
+		if (!TYPE.equals(event.eventType())) {
 			throw new InvalidOrderCreatedEventException("eventType must be OrderCreated");
 		}
-		if (event.eventVersion() != 1 && event.eventVersion() != 2) {
+		if (event.eventVersion() != VERSION_1 && event.eventVersion() != VERSION_2) {
 			throw new InvalidOrderCreatedEventException("eventVersion must be 1 or 2");
 		}
 		if (event.payload() == null || event.payload().orderId() == null || event.payload().orderId().isBlank()) {

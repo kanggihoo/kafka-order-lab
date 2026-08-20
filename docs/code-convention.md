@@ -31,6 +31,7 @@ status: active
    - topic, consumer group, broker 주소, 포트처럼 환경별로 달라지는 값은 `application.yml` 또는 환경 변수로 관리한다.
    - 반복해서 쓰는 값은 의미 있는 상수로 분리한다.
    - 비즈니스 의미가 있는 문자열은 코드 곳곳에 중복해서 작성하지 않는다.
+   - 중첩 타입은 import하고 코드에서는 간단한 타입 이름을 사용한다.
 
 4. **입력은 경계에서 검증한다.**
    - HTTP 요청 DTO에는 필요한 Bean Validation을 선언한다.
@@ -48,12 +49,12 @@ status: active
    - 긴 메서드는 검증, 변환, 저장·발행처럼 의미 있는 단위로 나눈다.
 
 7. **예외와 로그를 숨기지 않는다.**
-   - controller에 `try-catch`를 작성하지 않고 `@RestControllerAdvice`에서 HTTP 예외 응답을 일관되게 처리한다.
+   - HTTP 예외 처리는 전역 예외 처리기에서 담당한다.
    - service는 예상 가능한 예외를 의미 있는 custom exception으로 전환해 전달한다.
    - 클라이언트에는 stack trace나 내부 시스템 정보를 노출하지 않고, 서버 로그에만 기록한다.
 
 8. **API 응답 형식을 통일한다.**
-   - 성공과 실패 응답은 공통 응답 DTO로 반환한다.
+   - 성공 응답은 `SuccessResponse`, 실패 응답은 `ErrorResponse` 형식으로 각각 통일한다.
    - 실패 응답에는 HTTP status, message, error code, field 오류(해당 시), timestamp, path를 포함한다.
    - error code와 HTTP status는 분리한다. HTTP status는 통신 결과를, error code는 애플리케이션 오류 종류를 표현한다.
    - Validation, 비즈니스, 인증·인가 예외도 같은 오류 응답 형식을 사용한다.
@@ -82,17 +83,3 @@ status: active
    - 현재 Step의 학습 목표와 관계없는 의존성, 추상화, 인프라는 추가하지 않는다.
    - 공통화는 실제로 두 곳 이상에서 같은 문제가 반복될 때 검토한다.
 
-## 변경 전 확인 목록
-
-- [ ] controller, service, DTO의 역할이 섞이지 않았는가?
-- [ ] 요청·이벤트·Entity를 목적에 맞는 별도 타입으로 표현했는가?
-- [ ] 환경별 값과 반복 값이 하드코딩되어 있지 않은가?
-- [ ] 전역 예외 처리와 공통 성공·오류 응답 형식을 지켰는가?
-- [ ] 로그만으로 Kafka 처리 위치와 실패 원인을 추적할 수 있는가?
-- [ ] public API에 JavaDoc을, 테스트에 `@DisplayName`을 작성했는가?
-- [ ] 변경한 동작을 테스트 또는 실험으로 확인했는가?
-- [ ] 이번 Step에 필요 없는 코드를 추가하지 않았는가?
-
-## 최종 요약
-
-controller, service, DTO의 역할을 나누고 단순 데이터에는 `record`를 사용한다. 예외는 전역에서 일관된 형식으로 응답하고, 내부 정보는 서버 로그에만 남긴다. 환경별 값은 하드코딩하지 않으며, `@Slf4j`, JavaDoc, `@DisplayName`으로 코드의 의도를 남긴다. 구현 범위는 현재 Step에 필요한 수준으로 제한하고, 변경 결과는 테스트와 실험 기록으로 확인한다.

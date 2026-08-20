@@ -1,6 +1,7 @@
 package com.ssafy.kafkaorderlab.event;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 /**
  * 주문 생성 이벤트의 payload를 표현한다.
  *
@@ -11,6 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public record OrderCreatedPayload(
 	String orderId,
 	long amount,
-	@JsonInclude(JsonInclude.Include.NON_NULL) String couponCode
+	@JsonInclude(Include.NON_NULL) String couponCode
 ) {
 }

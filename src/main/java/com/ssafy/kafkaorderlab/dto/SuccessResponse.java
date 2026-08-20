@@ -12,7 +12,7 @@ import java.time.Instant;
  * @param timestamp 응답 생성 시각
  * @param <T> 응답 데이터 타입
  */
-public record ApiResponse<T>(boolean success, int status, String message, T data, Instant timestamp) {
+public record SuccessResponse<T>(boolean success, int status, String message, T data, Instant timestamp) {
 
 	/**
 	 * 데이터가 없는 성공 응답을 생성한다.
@@ -21,7 +21,7 @@ public record ApiResponse<T>(boolean success, int status, String message, T data
 	 * @param message 응답 메시지
 	 * @return 공통 성공 응답
 	 */
-	public static ApiResponse<Void> accepted(int status, String message) {
-		return new ApiResponse<>(true, status, message, null, Instant.now());
+	public static SuccessResponse<Void> accepted(int status, String message) {
+		return new SuccessResponse<>(true, status, message, null, Instant.now());
 	}
 }

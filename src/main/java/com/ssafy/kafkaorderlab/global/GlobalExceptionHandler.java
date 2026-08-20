@@ -1,4 +1,4 @@
-package com.ssafy.kafkaorderlab.controller;
+package com.ssafy.kafkaorderlab.global;
 
 import com.ssafy.kafkaorderlab.dto.ErrorResponse;
 import java.time.Instant;

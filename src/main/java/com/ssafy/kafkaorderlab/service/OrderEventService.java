@@ -1,5 +1,11 @@
 package com.ssafy.kafkaorderlab.service;
 
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.EVENT_TYPE_HEADER;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.EVENT_VERSION_HEADER;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.TYPE;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_1;
+import static com.ssafy.kafkaorderlab.event.OrderCreatedEventContract.VERSION_2;
+
 import com.ssafy.kafkaorderlab.dto.CreateOrderRequest;
 import com.ssafy.kafkaorderlab.event.EventEnvelope;
 import com.ssafy.kafkaorderlab.event.OrderCreatedPayload;
@@ -22,8 +28,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class OrderEventService {
 
-	private static final String ORDER_CREATED = "OrderCreated";
-
 	private final KafkaTemplate<String, EventEnvelope<OrderCreatedPayload>> kafkaTemplate;
 	private final String orderEventsTopic;
 
@@ -45,8 +49,8 @@ public class OrderEventService {
 		EventEnvelope<OrderCreatedPayload> event = createEvent(request);
 		ProducerRecord<String, EventEnvelope<OrderCreatedPayload>> record = new ProducerRecord<>(
 			orderEventsTopic, request.orderId(), event);
-		record.headers().add("eventType", event.eventType().getBytes(StandardCharsets.UTF_8));
-		record.headers().add("eventVersion", String.valueOf(event.eventVersion()).getBytes(StandardCharsets.UTF_8));
+		record.headers().add(EVENT_TYPE_HEADER, event.eventType().getBytes(StandardCharsets.UTF_8));
+		record.headers().add(EVENT_VERSION_HEADER, String.valueOf(event.eventVersion()).getBytes(StandardCharsets.UTF_8));
 		CompletableFuture<SendResult<String, EventEnvelope<OrderCreatedPayload>>> future = kafkaTemplate.send(record);
 		future.whenComplete((result, error) -> {
 			if (error != null) {
@@ -60,8 +64,8 @@ public class OrderEventService {
 	}
 
 	private EventEnvelope<OrderCreatedPayload> createEvent(CreateOrderRequest request) {
-		int eventVersion = request.couponCode() == null ? 1 : 2;
-		return new EventEnvelope<>(UUID.randomUUID(), ORDER_CREATED, eventVersion, Instant.now(),
+		int eventVersion = request.couponCode() == null ? VERSION_1 : VERSION_2;
+		return new EventEnvelope<>(UUID.randomUUID(), TYPE, eventVersion, Instant.now(),
 			new OrderCreatedPayload(request.orderId(), request.amount(), request.couponCode()));
 	}
 }

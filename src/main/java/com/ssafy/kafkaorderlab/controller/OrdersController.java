@@ -1,7 +1,7 @@
 package com.ssafy.kafkaorderlab.controller;
 
 import com.ssafy.kafkaorderlab.dto.CreateOrderRequest;
-import com.ssafy.kafkaorderlab.dto.ApiResponse;
+import com.ssafy.kafkaorderlab.dto.SuccessResponse;
 import com.ssafy.kafkaorderlab.service.OrderEventService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +31,10 @@ class OrdersController {
 	 * @return 주문 이벤트 접수 성공 응답
 	 */
 	@PostMapping("/orders")
-	ResponseEntity<ApiResponse<Void>> create(@Valid @RequestBody CreateOrderRequest request) {
+	ResponseEntity<SuccessResponse<Void>> create(@Valid @RequestBody CreateOrderRequest request) {
 		orderEventService.publishOrderCreated(request);
 		return ResponseEntity.status(HttpStatus.ACCEPTED)
-			.body(ApiResponse.accepted(HttpStatus.ACCEPTED.value(), "주문 생성 이벤트를 접수했습니다."));
+			.body(SuccessResponse.accepted(HttpStatus.ACCEPTED.value(), "주문 생성 이벤트를 접수했습니다."));
 	}
 
 }
